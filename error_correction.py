@@ -40,20 +40,36 @@ def main():
     total_err = 0
     i = 0
     while i <= len(actual) - window_size:
+        print(f'iteration: {i}')
         position = find_right_position(actual, expected, i, window_size)
         if position != i and position != -1 and position - i < 20:
             misses = position - i
-            p_miss = 8.0
+            p_miss = 8
+            prev_misses = [8, 0, 0]
+            stuck = False
             [t_err, t_miss, sub_arr] = s_aligner.align(actual[prev_checkpoint + 1:i + window_size],
                                                        expected[prev_checkpoint + 1:position + window_size], p_miss)
+
             while t_miss != misses:
-                print(f'misses found: {t_miss}, misses expected: {misses}, penalty: {p_miss}')
                 if t_miss > misses:
-                    p_miss += 0.01
+                    p_miss += 1
                 else:
-                    p_miss -= 0.01
+                    p_miss -= 1
+
+                prev_misses[2] = prev_misses[1]
+                prev_misses[1] = prev_misses[0]
+                prev_misses[0] = p_miss
+
+                if prev_misses[2] == prev_misses[0]:
+                    stuck = True
+                    break
+
                 [t_err, t_miss, sub_arr] = s_aligner.align(actual[prev_checkpoint + 1:i + window_size],
                                                            expected[prev_checkpoint + 1:position + window_size], p_miss)
+
+            if stuck:
+                i += 1
+                continue
 
             print(f'found {t_miss} misses')
             aligned[prev_checkpoint + 1:position + window_size] = sub_arr
@@ -63,7 +79,7 @@ def main():
                 break
 
             aligned[position + window_size:len(aligned)] = actual[i + window_size:i + window_size + (
-                        len(aligned) - (position + window_size))]
+                    len(aligned) - (position + window_size))]
             actual = aligned.copy()
             total_err += t_err
             total_miss += t_miss
