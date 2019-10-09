@@ -1,7 +1,7 @@
 import csv
 import sys
 
-import shortest_path_aligner as saligner
+import shortest_path_aligner as s_aligner
 
 window_size = 2
 
@@ -38,29 +38,39 @@ def main():
     aligned = [0] * len(expected)
     total_miss = 0
     total_err = 0
-
-    for i in range(len(actual) - window_size + 1):
+    i = 0
+    while i <= len(actual) - window_size:
         position = find_right_position(actual, expected, i, window_size)
-        if position != i and position != -1:
+        if position != i and position != -1 and position - i < 20:
             misses = position - i
             p_miss = 8.0
-            [t_err, t_miss, sub_arr] = saligner.align(actual[prev_checkpoint + 1:i + window_size],
-                                                      expected[prev_checkpoint + 1:position + window_size], p_miss)
+            [t_err, t_miss, sub_arr] = s_aligner.align(actual[prev_checkpoint + 1:i + window_size],
+                                                       expected[prev_checkpoint + 1:position + window_size], p_miss)
             while t_miss != misses:
-                print(f'expected misses: {misses} actual misses: {t_miss} penalty: {p_miss}')
+                print(f'misses found: {t_miss}, misses expected: {misses}, penalty: {p_miss}')
                 if t_miss > misses:
-                    p_miss += 0.2
+                    p_miss += 0.01
                 else:
-                    p_miss -= 0.2
-                [t_err, t_miss, sub_arr] = saligner.align(actual[prev_checkpoint + 1:i + window_size],
-                                                          expected[prev_checkpoint + 1:position + window_size], p_miss)
+                    p_miss -= 0.01
+                [t_err, t_miss, sub_arr] = s_aligner.align(actual[prev_checkpoint + 1:i + window_size],
+                                                           expected[prev_checkpoint + 1:position + window_size], p_miss)
 
+            print(f'found {t_miss} misses')
             aligned[prev_checkpoint + 1:position + window_size] = sub_arr
-            total_err += t_err
-            total_miss += t_miss
+
             prev_checkpoint = position + window_size
             if prev_checkpoint == len(expected):
                 break
+
+            aligned[position + window_size:len(aligned)] = actual[i + window_size:i + window_size + (
+                        len(aligned) - (position + window_size))]
+            actual = aligned.copy()
+            total_err += t_err
+            total_miss += t_miss
+
+            i = position + window_size
+        else:
+            i += 1
 
     print(f'Total error {total_err}bits = {total_err / (512 * 8) * 100}%')
     print(f'Packets missed {total_miss} = {total_miss / 512 * 100}%')
@@ -72,5 +82,5 @@ def main():
 
 
 if __name__ == '__main__':
-    saligner.hex_to_bin('0')
+    s_aligner.hex_to_bin('0')
     main()
