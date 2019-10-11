@@ -71,7 +71,8 @@ def main():
                 i += 1
                 continue
 
-            print(f'found {t_miss} misses')
+            total_miss += t_miss
+            total_err += t_err
             aligned[prev_checkpoint + 1:position + window_size] = sub_arr
 
             prev_checkpoint = position + window_size
@@ -81,20 +82,19 @@ def main():
             aligned[position + window_size:len(aligned)] = actual[i + window_size:i + window_size + (
                     len(aligned) - (position + window_size))]
             actual = aligned.copy()
-            total_err += t_err
-            total_miss += t_miss
 
             i = position + window_size
         else:
             i += 1
 
-    print(f'Total error {total_err}bits = {total_err / (512 * 8) * 100}%')
-    print(f'Packets missed {total_miss} = {total_miss / 512 * 100}%')
     with open(output_file_path, mode='w') as csv_file:
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow(["actual", "expected"])
         for i in range(len(expected)):
             csv_writer.writerow([aligned[i], expected[i]])
+
+    print(f'Total error {total_err}bits = {total_err / (512 * 8) * 100}%')
+    print(f'Packets missed {total_miss} = {total_miss / 512 * 100}%')
 
 
 if __name__ == '__main__':
