@@ -79,12 +79,13 @@ def align(m_actual, m_expected, miss_penalty):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print(f'Invalid number of arguments, use: python3 {sys.argv[0]} path_to_csv_file miss_penalty')
+    if len(sys.argv) != 4:
+        print(f'Invalid number of arguments, use: python3 shortest_path_aligner input_file output_file miss_penalty')
         exit()
 
     raw_data_path = sys.argv[1]
-    p_miss = int(sys.argv[2])
+    output_file_path = sys.argv[2]
+    p_miss = int(sys.argv[3])
 
     actual = []
     expected = []
@@ -101,5 +102,12 @@ if __name__ == '__main__':
 
     [t_err, t_miss, aligned] = align(actual, expected, p_miss)
 
+    with open(output_file_path, mode='w') as csv_file:
+        csv_writer = csv.writer(csv_file)
+        csv_writer.writerow(["actual", "expected"])
+        for i in range(len(expected)):
+            csv_writer.writerow([aligned[i], expected[i]])
+
     print(f'Total error {t_err}bits = {t_err / (512 * 8) * 100}%')
     print(f'Packets missed {t_miss} = {t_miss / 512 * 100}%')
+
