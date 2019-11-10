@@ -100,7 +100,11 @@ if __name__ == '__main__':
         del actual[0]
         del expected[0]
 
+    actual.reverse()
+    expected.reverse()
     [t_err, t_miss, aligned] = align(actual, expected, p_miss)
+    aligned.reverse()
+    expected.reverse()
 
     with open(output_file_path, mode='w') as csv_file:
         csv_writer = csv.writer(csv_file)
